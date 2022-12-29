@@ -1,4 +1,4 @@
-module github.com/puppetlabs/security-falco-cserver
+module github.com/livinginsyn/falco-cserver
 
 go 1.18
 
