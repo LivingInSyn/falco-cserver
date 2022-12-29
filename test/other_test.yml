@@ -1,0 +1,8 @@
+- rule: Write below root
+  exceptions:
+    - name: r10k_git
+      fields: [proc.name, fd.name]
+      comps: [=, startswith]
+      values:
+        - [git, /root/.r10k/git/]
+  append: true

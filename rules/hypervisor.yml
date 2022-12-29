@@ -1,0 +1,18 @@
+# ignore LVM cache temp file
+- rule: Write below etc
+  exceptions:
+  - name: ignore_apparmor
+    fields: [ fd.name, proc.name ]
+    comps: [ startswith, = ]
+    values:
+      - [ /etc/apparmor.d/libvirt/, virt-aa-helper ]
+  append: true
+
+- rule: Write below etc
+  exceptions:
+  - name: ignore_qemu
+    fields: [ fd.name, proc.name ]
+    comps: [ startswith, = ]
+    values:
+      - [ /etc/libvirt/qemu/, libvirtd ]
+  append: true

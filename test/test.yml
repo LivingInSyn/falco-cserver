@@ -1,0 +1,11 @@
+- list: apt_files
+  items: [/bin/ls, /bin/rm]
+
+- rule: Write below rpm database
+  exceptions:
+  - name: pe_needs_restarting
+    fields: [ proc.pcmdline, proc.cmdline ]
+    comps: [ startswith, startswith ]
+    values:
+      - [ pe_patch_fact_g, needs-restartin ]
+  append: true

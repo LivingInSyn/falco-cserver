@@ -1,0 +1,17 @@
+# ignore package management calls
+- rule: Launch Package Management Process in Container
+  condition: >
+    and not package_mgmt_procs
+  append: true
+
+# ignore calls to update-crypto-policies.py
+# see: https://access.redhat.com/articles/3666211
+- rule: Write below etc
+  exceptions:
+  - name: update_crypto_policies
+    fields: [ proc.name ]
+    comps: [ = ]
+    values:
+      - [ update-crypto-p ]
+  append: true
+

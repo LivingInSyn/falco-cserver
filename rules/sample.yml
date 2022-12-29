@@ -1,0 +1,31 @@
+# Ignore veemservice
+- rule: Write below rpm database
+  exceptions:
+  - name: ignore_veeamservice
+    fields: [ proc.name ]
+    comps: [ = ]
+    values:
+      - [ veeamservice ]
+  append: true
+
+# ignore logrotate clearing logs
+- rule: Clear Log Activities
+  exceptions:
+  - name: logrotate
+    fields: [ proc.cmdline ]
+    comps: [ startswith ]
+    values:
+      - [ logrotate ]
+  append: true
+
+# ignore the rm /usr/sbin/install-mime
+# since it's intended apt behavior. See: 
+# https://www.apt-browse.org/browse/debian/jessie/main/all/mime-support/3.58/debian/postinst
+- rule: Modify binary dirs
+  exceptions:
+  - name: rm_sbin_mime
+    fields: [ proc.cmdline ]
+    comps: [ = ]
+    values:
+      - [ rm -f /usr/sbin/install-mime ]
+  append: true
