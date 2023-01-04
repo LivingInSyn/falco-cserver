@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -21,15 +22,34 @@ type authenticationMiddleware struct {
 	tokenUsers map[string]string
 }
 
-func (amw *authenticationMiddleware) Populate() {
-	f, err := os.Open(authConfFile)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Couldn't open config file")
+func NewAuthMiddleware() *authenticationMiddleware {
+	// if the FCS_AUTH env var is set then use that,
+	// otherwise we're going to read the file defined
+	// in authConfFile
+	var secretReader io.Reader
+	authFileString, envSet := os.LookupEnv("FCS_AUTH")
+	if envSet {
+		secretReader = strings.NewReader(authFileString)
+	} else {
+		f, err := os.Open(authConfFile)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Couldn't open config file")
+		}
+		defer f.Close()
+		secretReader = f
 	}
-	defer f.Close()
+
+	amw := &authenticationMiddleware{
+		tokenUsers: make(map[string]string),
+	}
+	amw.populate(secretReader)
+	return amw
+}
+
+func (amw *authenticationMiddleware) populate(reader io.Reader) {
 	var u userConf
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&u)
+	decoder := yaml.NewDecoder(reader)
+	err := decoder.Decode(&u)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to unmarshal auth.yml")
 	}

@@ -8,13 +8,13 @@ This project serves up falco rule sets over an HTTP(S) web service. It currently
 This service concatenates rule sets based on the ones requested. 
 
 # Authentication
-User config is defined in a file named: `/secrets/auth.yml`. This file should be mounted by GCP secrets, a docker volume, or similar method. A sample user config file is in `test/auth.yml`. It is a yaml file that has a map of `token`->`username`
+User config is defined in a file named: `/secrets/auth.yml` or as yaml passed via the `FCS_AUTH` environmental variable. If using a file it should be mounted by GCP secrets, a docker volume, or similar method. A sample user config file is in `test/auth.yml`. It is a yaml file that has a map of `token`->`username`
 
 Requests should be authenticated by putting the user token in an `X-Auth-Token` header on the request. 
 
 Requests may also use basic authentication.
 
-The health check (`/`) is always allowed without authentication
+The health check (`/`) is always allowed without authentication.
 
 # Endpoints
 

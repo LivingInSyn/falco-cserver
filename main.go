@@ -19,7 +19,7 @@ type RulesetRequest struct {
 
 func configLogger() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	_, dob := os.LookupEnv("FAM_DEBUG")
+	_, dob := os.LookupEnv("FCS_DEBUG")
 	if dob {
 		log.Info().Msg("Log level set to DEBUG")
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -104,8 +104,9 @@ func main() {
 	r.HandleFunc("/ruleset", GetRules).Methods("GET")
 	r.HandleFunc("/sum", GetSum).Methods("GET")
 	//setup auth middleware
-	amw := authenticationMiddleware{make(map[string]string)}
-	amw.Populate()
+	// if the FCS_AUTH env var is set then use that,
+	// otherwise we're going to read
+	amw := NewAuthMiddleware()
 	r.Use(amw.Middleware)
 	// start the server
 	err := http.ListenAndServe(port, r)
