@@ -45,7 +45,7 @@ func TestHash(t *testing.T) {
 	}
 	h1sum := h1.Sum(nil)
 	// call get sum from main
-	rPath := fmt.Sprintf("/sum?rulesets=sample")
+	rPath := "/sum?rulesets=sample"
 	req, err := http.NewRequest("GET", rPath, nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(GetSum)

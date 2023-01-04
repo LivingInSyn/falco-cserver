@@ -5,16 +5,20 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/mux"
 )
 
+var nmw sync.Mutex
+
 func TestPopulate(t *testing.T) {
 	authConfFile = "./test/auth.yml"
-	amw := authenticationMiddleware{make(map[string]string)}
-	amw.Populate()
+	amw := NewAuthMiddleware()
+	_ = amw
 }
 
 func dummyHandler(w http.ResponseWriter, r *http.Request) {}
@@ -55,10 +59,37 @@ func newRequest(method, url string) *http.Request {
 	return req
 }
 
+func TestMiddlewareEnvVar(t *testing.T) {
+	nmw.Lock()
+	defer nmw.Unlock()
+	os.Setenv("FCS_AUTH", "users:\n  some_token_1: user_a\n  some_token_2: user_b")
+	defer os.Unsetenv("FCS_AUTH")
+	amw := NewAuthMiddleware()
+	if amw.tokenUsers["some_token_1"] != "user_a" {
+		t.Fatalf("failed to parse env var passed auth file. Wanted user_a,got: %s", amw.tokenUsers["some_token_1"])
+	}
+	if amw.tokenUsers["some_token_2"] != "user_b" {
+		t.Fatalf("failed to parse env var passed auth file. Wanted user_b,got: %s", amw.tokenUsers["some_token_2"])
+	}
+}
+
+func TestMiddlewareByFile(t *testing.T) {
+	nmw.Lock()
+	defer nmw.Unlock()
+	amw := NewAuthMiddleware()
+	if amw.tokenUsers["some_token_1"] != "user_a" {
+		t.Fatalf("failed to parse env var passed auth file. Wanted user_a,got: %s", amw.tokenUsers["some_token_1"])
+	}
+	if amw.tokenUsers["some_token_2"] != "user_b" {
+		t.Fatalf("failed to parse env var passed auth file. Wanted user_b,got: %s", amw.tokenUsers["some_token_2"])
+	}
+}
+
 func TestMiddlewareHealthcheck(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/", dummyHandler).Methods("GET")
@@ -76,7 +107,8 @@ func TestMiddlewareHealthcheck(t *testing.T) {
 func TestMiddlewareGood(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/test", dummyHandler).Methods("POST")
@@ -94,7 +126,8 @@ func TestMiddlewareGood(t *testing.T) {
 func TestMiddlewareDenied(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/test", dummyHandler).Methods("POST")
@@ -112,7 +145,8 @@ func TestMiddlewareDenied(t *testing.T) {
 func TestMiddlewareGoodBasic(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/test", dummyHandler).Methods("POST")
@@ -131,7 +165,8 @@ func TestMiddlewareGoodBasic(t *testing.T) {
 func TestMiddlewareDeniedBasic(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/test", dummyHandler).Methods("POST")
@@ -150,7 +185,8 @@ func TestMiddlewareDeniedBasic(t *testing.T) {
 func TestMiddlewareHealthCheck(t *testing.T) {
 	// setup the middleware
 	u := map[string]string{"foo": "some_user"}
-	amw := authenticationMiddleware{u}
+	amw := NewAuthMiddleware()
+	amw.tokenUsers = u
 	// build the router with the middleware
 	router := mux.NewRouter()
 	router.HandleFunc("/", dummyHandler)
